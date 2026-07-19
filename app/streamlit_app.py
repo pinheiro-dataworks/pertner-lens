@@ -129,6 +129,22 @@ def inject_css() -> None:
 
         [data-testid="stMetricValue"] {{ font-family: 'IBM Plex Mono', monospace; }}
         hr {{ border-color: {PALETTE['border']}; }}
+
+        /* ---------------- top KPI row ----------------
+           the gauge card (Avg. Partner Health) is taller than the plain
+           text kpi_card()s because it also holds a plotly chart; pin all
+           four top-row cards to the same height so they align. */
+        .kpirow, [class*="_kpirow"] {{ min-height: 180px; box-sizing: border-box; }}
+
+        /* ---------------- select dropdown popover ----------------
+           the BaseWeb select menu renders in a portal with an unstyled
+           white background; the global span/div rule above still applies
+           PALETTE['text_primary'] (light, meant for dark surfaces), making
+           the options unreadable. Force dark text on the popover only. */
+        [data-baseweb="popover"] li, [data-baseweb="popover"] li *,
+        [data-baseweb="menu"] li, [data-baseweb="menu"] li * {{
+            color: #1a1a1a !important;
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -213,7 +229,7 @@ def short_id(seller_id: str, head: int = 10, tail: int = 4) -> str:
 _card_seq = itertools.count()
 
 
-def card():
+def card(extra_key: str = ""):
     """A "pl-card"-styled container that can hold real Streamlit widgets
     (charts, selectboxes, dataframes), not just markdown text.
 
@@ -224,13 +240,20 @@ def card():
     parent (class `st-key-<key>`) that every widget rendered inside its
     `with` block becomes a true child of; the `[class*="st-key-card_"]` CSS
     rule (see inject_css) styles any such container as a card.
+
+    `extra_key` is appended to the container key so a CSS rule can target
+    this specific card via `[class*="_{extra_key}"]` (e.g. "kpirow" to pin
+    the top KPI row to a shared height -- see inject_css).
     """
-    return st.container(key=f"card_{next(_card_seq)}", border=False)
+    key = f"card_{next(_card_seq)}"
+    if extra_key:
+        key = f"{key}_{extra_key}"
+    return st.container(key=key, border=False)
 
 
-def kpi_card(label: str, value: str, sub: str) -> None:
+def kpi_card(label: str, value: str, sub: str, extra_class: str = "") -> None:
     st.markdown(
-        f"""<div class="pl-card">
+        f"""<div class="pl-card {extra_class}">
             <div class="kpi-label">{label}</div>
             <div class="kpi-value">{value}</div>
             <div class="kpi-sub">{sub}</div>
@@ -316,15 +339,16 @@ def render_overview(sellers: pd.DataFrame, profiles: list[dict], diagnostics: di
             "Sellers Active (≤90d)",
             fmt_int(active_mask.sum()),
             f"{100*active_mask.mean():.1f}% of {fmt_int(len(sellers))} sellers",
+            extra_class="kpirow",
         )
     with c2:
-        kpi_card("GMV Analyzed", fmt_brl_compact(total_revenue), "sum of seller-order pair revenue")
+        kpi_card("GMV Analyzed", fmt_brl_compact(total_revenue), "sum of seller-order pair revenue", extra_class="kpirow")
     with c3:
-        with card():
+        with card(extra_key="kpirow"):
             st.markdown('<div class="kpi-label">Avg. Partner Health (GMV-weighted)</div>', unsafe_allow_html=True)
             st.plotly_chart(health_gauge(avg_health, height=110), use_container_width=True, config={"displayModeBar": False})
     with c4:
-        kpi_card("Avg. Negative Review Rate", fmt_pct(avg_neg_review), "order review score ≤ 2")
+        kpi_card("Avg. Negative Review Rate", fmt_pct(avg_neg_review), "order review score ≤ 2", extra_class="kpirow")
 
     col1, col2 = st.columns([1.3, 1])
     with col1:
