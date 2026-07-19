@@ -136,11 +136,14 @@ def inject_css() -> None:
            four top-row cards to the same height so they align. */
         .kpirow, [class*="_kpirow"] {{ min-height: 180px; box-sizing: border-box; }}
 
-        /* ---------------- select dropdown popover ----------------
-           the BaseWeb select menu renders in a portal with an unstyled
-           white background; the global span/div rule above still applies
-           PALETTE['text_primary'] (light, meant for dark surfaces), making
-           the options unreadable. Force dark text on the popover only. */
+        /* ---------------- select control + dropdown popover ----------------
+           the BaseWeb select control (closed, showing the chosen value) and
+           its menu popover (open, portal-rendered) both have an unstyled
+           white/light background; the global span/div rule above still
+           applies PALETTE['text_primary'] (light, meant for dark surfaces),
+           making the text unreadable in both states. Force dark text on
+           the select control itself and on the popover's option list. */
+        [data-baseweb="select"] *,
         [data-baseweb="popover"] li, [data-baseweb="popover"] li *,
         [data-baseweb="menu"] li, [data-baseweb="menu"] li * {{
             color: #1a1a1a !important;

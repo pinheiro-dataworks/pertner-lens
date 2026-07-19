@@ -5,7 +5,16 @@
       "Bash(python -m py_compile app/streamlit_app.py)",
       "Read(//c/Users/rfppr/AppData/Local/Temp/claude/**)",
       "Bash(netstat -ano)",
-      "Bash(python generate.py)"
+      "Bash(python generate.py)",
+      "Bash(python \"C:\\\\Users\\\\rfppr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\pl_inspect.py\")",
+      "Bash(python \"C:\\\\Users\\\\rfppr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\pl_screenshot2.py\")",
+      "Bash(python \"C:\\\\Users\\\\rfppr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\pl_inspect3.py\")",
+      "Bash(python \"C:\\\\Users\\\\rfppr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\pl_inspect4.py\")",
+      "Bash(tasklist)",
+      "Bash(sed -i 's/localhost:8501/localhost:8502/' \"C:\\\\Users\\\\rfppr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\pl_inspect3.py\" \"C:\\\\Users\\\\rfppr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\pl_inspect4.py\" \"C:\\\\Users\\\\rfppr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\pl_screenshot2.py\" *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\rfppr\\AppData\\Local\\Temp\\claude"
     ]
   }
 }
