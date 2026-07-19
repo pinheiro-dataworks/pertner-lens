@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PartnerLens — Partner Segmentation & Performance Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  :root{
+    --bg:#14171C;
+    --bg-elevated:#1B1F27;
+    --surface:#1F242E;
+    --surface-hover:#262C38;
+    --border:#2B303C;
+    --border-strong:#3A4152;
+    --text-primary:#ECE9E2;
+    --text-secondary:#9CA1AD;
+    --text-tertiary:#666C79;
+    --gold:#E8A33D;
+    --gold-soft:rgba(232,163,61,0.14);
+    --rust:#C1694A;
+    --violet:#8B85C7;
+    --teal:#4FB3A9;
+    --red:#D6685F;
+    --green:#6FBF7D;
+    --font-display:'Space Grotesk', ui-sans-serif, sans-serif;
+    --font-body:'Inter', ui-sans-serif, sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  a{color:inherit;}
+  ::selection{background:var(--gold-soft); color:var(--text-primary);}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:2px; border-radius:4px;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+
+  /* ---------- layout ---------- */
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:236px; flex-shrink:0;
+    background:var(--bg-elevated);
+    border-right:1px solid var(--border);
+    padding:26px 16px;
+    display:flex; flex-direction:column; gap:26px;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{display:flex; align-items:center; gap:10px; padding:0 6px;}
+  .brand-mark{width:34px; height:34px; flex-shrink:0;}
+  .brand-text .name{font-family:var(--font-display); font-weight:700; font-size:17px; letter-spacing:-0.01em; line-height:1.1;}
+  .brand-text .tag{font-size:11px; color:var(--text-tertiary); letter-spacing:0.03em; text-transform:uppercase; margin-top:2px;}
+
+  nav.tabs{display:flex; flex-direction:column; gap:4px;}
+  .nav-btn{
+    display:flex; align-items:center; gap:11px;
+    padding:10px 12px; border-radius:10px;
+    background:transparent; border:1px solid transparent;
+    color:var(--text-secondary); font-family:var(--font-body); font-size:13.5px; font-weight:500;
+    cursor:pointer; text-align:left; width:100%;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .nav-btn svg{width:17px; height:17px; flex-shrink:0; opacity:0.8;}
+  .nav-btn:hover{background:var(--surface-hover); color:var(--text-primary);}
+  .nav-btn.active{background:var(--gold-soft); color:var(--gold); border-color:rgba(232,163,61,0.25);}
+  .nav-btn.active svg{opacity:1;}
+
+  .sidebar-foot{margin-top:auto; padding:12px 6px 0; border-top:1px solid var(--border); font-size:11px; color:var(--text-tertiary); line-height:1.6;}
+  .sidebar-foot b{color:var(--text-secondary); font-weight:600;}
+
+  .main{flex:1; min-width:0; padding:30px 40px 70px; max-width:1440px;}
+
+  /* ---------- topbar ---------- */
+  .topbar{display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap; margin-bottom:18px;}
+  .topbar h1{font-family:var(--font-display); font-size:26px; font-weight:700; letter-spacing:-0.01em; margin:0 0 6px;}
+  .topbar p.sub{color:var(--text-secondary); font-size:14px; margin:0; max-width:560px; line-height:1.5;}
+  .meta-chips{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+  .chip{
+    display:flex; align-items:center; gap:6px;
+    background:var(--surface); border:1px solid var(--border); border-radius:999px;
+    padding:6px 12px; font-size:11.5px; color:var(--text-secondary); font-family:var(--font-mono); white-space:nowrap;
+  }
+  .chip .dot{width:6px; height:6px; border-radius:50%; background:var(--gold);}
+
+  .disclaimer{
+    display:flex; gap:10px; align-items:flex-start;
+    border:1px dashed var(--border-strong); background:var(--bg-elevated);
+    border-radius:10px; padding:11px 14px; margin-bottom:26px;
+    font-size:12.5px; color:var(--text-secondary); line-height:1.55;
+  }
+  .disclaimer svg{width:15px; height:15px; flex-shrink:0; margin-top:2px; color:var(--gold);}
+  .disclaimer b{color:var(--text-primary);}
+
+  /* ---------- tabs ---------- */
+  .tab-panel{display:none; animation:fadeIn .35s ease;}
+  .tab-panel.active{display:block;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  h2.section-title{font-family:var(--font-display); font-size:16px; font-weight:600; margin:0 0 4px; letter-spacing:-0.005em;}
+  p.section-sub{color:var(--text-tertiary); font-size:12.5px; margin:0 0 14px; line-height:1.5;}
+
+  /* ---------- KPI cards ---------- */
+  .kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px;}
+  .kpi-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px 18px 16px; opacity:0; animation:riseIn .5s ease forwards;
+  }
+  .kpi-card:nth-child(1){animation-delay:.02s;}
+  .kpi-card:nth-child(2){animation-delay:.08s;}
+  .kpi-card:nth-child(3){animation-delay:.14s;}
+  .kpi-card:nth-child(4){animation-delay:.20s;}
+  @keyframes riseIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  .kpi-label{font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-tertiary); margin-bottom:10px; font-weight:600;}
+  .kpi-value{font-family:var(--font-mono); font-size:26px; font-weight:600; color:var(--text-primary); line-height:1;}
+  .kpi-delta{font-size:11.5px; color:var(--text-secondary); margin-top:8px;}
+  .kpi-card.with-gauge{display:flex; align-items:center; gap:14px;}
+  .kpi-card.with-gauge .kpi-gauge-text .kpi-label{margin-bottom:6px;}
+
+  /* ---------- chart cards / grid ---------- */
+  .grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-bottom:16px;}
+  .grid-2.even{grid-template-columns:1fr 1fr;}
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px;}
+  .card .card-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; gap:10px;}
+  .card .card-head h3{font-family:var(--font-display); font-size:14.5px; font-weight:600; margin:0;}
+  .card .card-head .card-caption{font-size:11.5px; color:var(--text-tertiary); margin-top:3px;}
+  .plot{width:100%;}
+
+  /* ---------- methodology note ---------- */
+  .note-card{
+    border:1px solid var(--border); border-radius:var(--radius);
+    background:linear-gradient(180deg, rgba(232,163,61,0.05), transparent 60%), var(--surface);
+    padding:20px 22px; margin-bottom:16px;
+  }
+  .note-card h3{font-family:var(--font-display); font-size:14.5px; font-weight:600; margin:0 0 4px; display:flex; align-items:center; gap:8px;}
+  .note-card h3 svg{width:15px; height:15px; color:var(--gold);}
+  .note-card ul{margin:12px 0 0; padding-left:18px; display:flex; flex-direction:column; gap:9px;}
+  .note-card li{font-size:12.8px; color:var(--text-secondary); line-height:1.6;}
+  .note-card li b{color:var(--text-primary); font-weight:600;}
+  .note-card code{font-family:var(--font-mono); background:var(--bg-elevated); padding:1px 5px; border-radius:4px; font-size:11.5px; color:var(--teal); border:1px solid var(--border);}
+  .todo-flag{color:var(--rust); font-style:italic;}
+
+  /* ---------- comparison table ---------- */
+  table.cmp{width:100%; border-collapse:collapse; font-size:12.8px; margin-top:8px;}
+  table.cmp th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); padding:8px 10px; border-bottom:1px solid var(--border-strong); font-weight:600;}
+  table.cmp td{padding:10px 10px; border-bottom:1px solid var(--border); color:var(--text-secondary); vertical-align:top;}
+  table.cmp tr:last-child td{border-bottom:none;}
+  table.cmp td.algo{color:var(--text-primary); font-weight:600; font-family:var(--font-mono); font-size:12px;}
+  table.cmp td.num{font-family:var(--font-mono); color:var(--text-primary);}
+  .pill{display:inline-block; padding:2px 9px; border-radius:999px; font-size:10.5px; font-weight:600; letter-spacing:0.02em;}
+  .pill.recommended{background:rgba(111,191,125,0.14); color:var(--green);}
+  .pill.caution{background:rgba(214,104,95,0.14); color:var(--red);}
+
+  /* ---------- profile cards ---------- */
+  .profiles-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:16px;}
+  .profile-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column;}
+  .profile-strip{height:5px; width:100%;}
+  .profile-body{padding:18px 20px 20px;}
+  .profile-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:6px;}
+  .profile-head h3{font-family:var(--font-display); font-size:15.5px; font-weight:700; margin:0; letter-spacing:-0.005em;}
+  .profile-count{font-family:var(--font-mono); font-size:11px; color:var(--text-tertiary); margin-top:3px;}
+  .profile-desc{font-size:12.6px; color:var(--text-secondary); line-height:1.55; margin:10px 0 14px;}
+  .profile-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-bottom:14px;}
+  .pstat .plabel{font-size:10.3px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:3px;}
+  .pstat .pval{font-family:var(--font-mono); font-size:14px; font-weight:600; color:var(--text-primary);}
+  .profile-action{border-top:1px solid var(--border); padding-top:13px; margin-top:2px;}
+  .action-tag{font-size:10.3px; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; margin-bottom:5px; display:block;}
+  .profile-action p{font-size:12.3px; color:var(--text-secondary); line-height:1.55; margin:0 0 8px;}
+  .profile-impact{font-size:11.6px; color:var(--text-tertiary); font-style:italic; line-height:1.5;}
+
+  /* ---------- lookup tab ---------- */
+  .lookup-controls{display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
+  .lookup-controls input, .lookup-controls select{
+    background:var(--bg-elevated); border:1px solid var(--border); color:var(--text-primary);
+    padding:9px 12px; border-radius:9px; font-size:13px; font-family:var(--font-body);
+  }
+  .lookup-controls input{flex:1; min-width:220px;}
+  .lookup-controls input::placeholder{color:var(--text-tertiary);}
+  .lookup-layout{display:grid; grid-template-columns:1.3fr 1fr; gap:16px; align-items:start;}
+  .results-count{font-size:11.5px; color:var(--text-tertiary); margin:-6px 0 10px;}
+  .table-wrap{max-height:520px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius);}
+  table.sellers{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table.sellers thead th{
+    position:sticky; top:0; background:var(--bg-elevated); text-align:left; padding:9px 12px;
+    font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); border-bottom:1px solid var(--border-strong); font-weight:600;
+  }
+  table.sellers td{padding:9px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary);}
+  table.sellers td.id{font-family:var(--font-mono); color:var(--text-primary); font-size:11.5px;}
+  table.sellers tbody tr{cursor:pointer; transition:background .1s ease;}
+  table.sellers tbody tr:hover{background:var(--surface-hover);}
+  table.sellers tbody tr.selected{background:var(--gold-soft);}
+  .seg-dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;}
+
+  .detail-panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; min-height:420px;}
+  .detail-empty{display:flex; flex-direction:column; align-items:center; justify-content:center; height:420px; color:var(--text-tertiary); font-size:12.8px; text-align:center; gap:10px;}
+  .detail-empty svg{width:34px; height:34px; opacity:0.4;}
+  .detail-header{display:flex; align-items:center; gap:14px; margin-bottom:10px;}
+  .detail-id{font-family:var(--font-mono); font-size:15px; font-weight:600; color:var(--text-primary);}
+  .detail-sub{font-size:11.5px; color:var(--text-tertiary); margin-top:2px;}
+  .detail-stats{display:grid; grid-template-columns:1fr 1fr; gap:9px 16px; margin:16px 0;}
+  .detail-action{border-top:1px solid var(--border); padding-top:12px; margin-top:6px;}
+  .detail-action p{font-size:12.4px; color:var(--text-secondary); line-height:1.55; margin:6px 0 0;}
+
+  /* ---------- gauge ---------- */
+  .gauge-tier-label{font-size:10px; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; font-weight:600;}
+
+  @media (max-width: 1080px){
+    .grid-2, .grid-2.even, .lookup-layout{grid-template-columns:1fr;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width: 760px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%; height:auto; position:relative; flex-direction:row; align-items:center; overflow-x:auto; padding:14px 16px;}
+    nav.tabs{flex-direction:row;}
+    .sidebar-foot{display:none;}
+    .main{padding:22px 18px 60px;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+    .meta-chips{justify-content:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="#E8A33D" stroke-width="1.6"/>
+        <g stroke="#E8A33D" stroke-width="1.3" opacity="0.85">
+          <path d="M20 6 L24 16 L20 20 Z"/>
+          <path d="M34 20 L24 24 L20 20 Z"/>
+          <path d="M20 34 L16 24 L20 20 Z"/>
+          <path d="M6 20 L16 16 L20 20 Z"/>
+        </g>
+        <circle cx="20" cy="20" r="4.2" fill="#E8A33D"/>
+      </svg>
+      <div class="brand-text">
+        <div class="name">PartnerLens</div>
+        <div class="tag">Partner Intelligence</div>
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button class="nav-btn active" data-tab="tab-overview" onclick="showTab('tab-overview')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Overview
+      </button>
+      <button class="nav-btn" data-tab="tab-segmentation" onclick="showTab('tab-segmentation')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="8" r="2.6"/><circle cx="17" cy="7" r="2.2"/><circle cx="16" cy="16" r="3.2"/><circle cx="6" cy="17" r="1.8"/></svg>
+        Segmentation Explorer
+      </button>
+      <button class="nav-btn" data-tab="tab-profiles" onclick="showTab('tab-profiles')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg>
+        Partner Profiles
+      </button>
+      <button class="nav-btn" data-tab="tab-lookup" onclick="showTab('tab-lookup')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="20" y1="20" x2="15.3" y2="15.3"/></svg>
+        Seller Lookup
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <b>Olist Brazilian E-Commerce</b><br>
+      9 relational tables · seller-order pair granularity<br>
+      K-Means (k=5) · StandardScaler · log1p
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="topbar">
+      <div>
+        <h1>Partner Segmentation & Performance Intelligence</h1>
+        <p class="sub">Marketplace sellers, not customers, are the unit of segmentation — profiling partner health, quality risk and growth potential from the seller-order pair upward.</p>
+      </div>
+      <div class="meta-chips">
+        <span class="chip"><span class="dot"></span>n = 1,800 sellers</span>
+        <span class="chip">reference date: 2018-10-17</span>
+        <span class="chip">k = 5 · K-Means</span>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 16.5h.01M10.3 3.9L2.7 17.5A1.8 1.8 0 004.3 20h15.4a1.8 1.8 0 001.6-2.6L13.7 3.9a1.8 1.8 0 00-3.4 0z"/></svg>
+      <div><b>Prototype notice.</b> All figures below are synthetically generated to reproduce the distributions expected from the Olist dataset (long-tail seller base, heavy-tailed revenue, review/delivery quality spread). Swap the data-loading layer for the pipeline's real Parquet artifacts before this ships — layout, chart types and interactions are final; the numbers are not.</div>
+    </div>
+
+    <!-- ======================= OVERVIEW ======================= -->
+    <section id="tab-overview" class="tab-panel active">
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Active Sellers (≤90d)</div>
+          <div class="kpi-value" id="kpi-active">—</div>
+          <div class="kpi-delta" id="kpi-active-sub">of total seller base</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Revenue Analyzed</div>
+          <div class="kpi-value" id="kpi-revenue">—</div>
+          <div class="kpi-delta" id="kpi-revenue-sub">sum of order item value, seller-order pairs</div>
+        </div>
+        <div class="kpi-card with-gauge">
+          <div id="kpi-gauge-holder"></div>
+          <div class="kpi-gauge-text">
+            <div class="kpi-label">Avg. Partner Health</div>
+            <div class="kpi-delta">population-weighted, 0–100 composite score</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avg. Negative Review Rate</div>
+          <div class="kpi-value" id="kpi-negreview">—</div>
+          <div class="kpi-delta" id="kpi-negreview-sub">order review score ≤ 2</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Revenue by Segment</h3>
+              <div class="card-caption">Average total revenue per seller within each cluster (log1p-scaled features, real R$ shown)</div>
+            </div>
+          </div>
+          <div id="chart-revenue-by-segment" class="plot"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Segment Distribution</h3>
+              <div class="card-caption">Share of the 1,800-seller base per cluster</div>
+            </div>
+          </div>
+          <div id="chart-segment-donut" class="plot"></div>
+        </div>
+      </div>
+
+      <div class="note-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5V6a2 2 0 012-2h9l5 5v10.5a2 2 0 01-2 2H6a2 2 0 01-2-2z"/><path d="M14 4v5h5"/></svg>
+          Modeling notes
+        </h3>
+        <ul>
+          <li><b>Unit of analysis:</b> the <code>seller-order pair</code>, not the raw order. Olist's <code>order_items</code> table allows more than one seller per order, so aggregating straight from <code>orders</code> would misattribute shared-order signals (delivery time, review score) to sellers who didn't drive them. Every feature below is built by first exploding to seller-order pairs, then aggregating up to seller level.</li>
+          <li><b>Monetary features:</b> <code>log1p(revenue)</code> prior to scaling — raw revenue is heavily right-skewed by a small number of high-GMV sellers, which would otherwise dominate distance-based clustering.</li>
+          <li><b>Recency window:</b> computed against the dataset's maximum order date (<code>2018-10-17</code>), not <code>today()</code> — this is a historical snapshot, not a live feed.</li>
+          <li><b>Known assumption — multi-seller review attribution:</b> Olist review scores are attached to the order, not the line item, so an order with items from two sellers assigns the same review to both. This inflates negative-review rate for sellers who happen to co-occur with a poor performer. <span class="todo-flag">Quantify the share of affected orders directly from <code>order_items.groupby('order_id').seller_id.nunique()</code> and report it here — do not ship a placeholder number.</span></li>
+        </ul>
+      </div>
+
+    </section>
+
+    <!-- ======================= SEGMENTATION ======================= -->
+    <section id="tab-segmentation" class="tab-panel">
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>K Selection — Elbow & Silhouette</h3>
+              <div class="card-caption">Inertia (elbow) vs. mean silhouette score across candidate k, on StandardScaler-transformed features</div>
+            </div>
+          </div>
+          <div id="chart-elbow" class="plot"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Cluster Projection (PCA)</h3>
+              <div class="card-caption">First two principal components, colored by K-Means assignment</div>
+            </div>
+          </div>
+          <div id="chart-pca" class="plot"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-head">
+          <div>
+            <h3>K-Means vs. DBSCAN — honest comparison</h3>
+            <div class="card-caption">DBSCAN is a stress test on the chosen feature space, not a candidate to replace K-Means here</div>
+          </div>
+        </div>
+        <table class="cmp">
+          <thead>
+            <tr><th>Algorithm</th><th>Silhouette</th><th>Clusters found</th><th>Labeled as noise</th><th>Notes</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="algo">K-Means (k=5)</td>
+              <td class="num">0.43</td>
+              <td class="num">5</td>
+              <td class="num">0%</td>
+              <td>Balanced, business-interpretable clusters; every seller gets an assignment, which the health-score and action layer both depend on.</td>
+              <td><span class="pill recommended">primary model</span></td>
+            </tr>
+            <tr>
+              <td class="algo">DBSCAN (eps=0.8, min_samples=15)</td>
+              <td class="num">0.29<span style="color:var(--text-tertiary); font-size:10.5px;"> (core pts only)</span></td>
+              <td class="num">4 (unstable)</td>
+              <td class="num">~31%</td>
+              <td>Density-based assumptions don't hold well on scaled performance features — high-health and low-health sellers occupy regions of very different local density, so density-uniform eps either merges quality tiers or strands a third of the base as noise. Useful only as an outlier-detection cross-check, never as the delivered segmentation.</td>
+              <td><span class="pill caution">stress test only</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3>Feature Correlation</h3>
+            <div class="card-caption">Pearson correlation across the six seller-level features feeding the model — flag anything above ~0.7 before finalizing the feature set</div>
+          </div>
+        </div>
+        <div id="chart-corr" class="plot"></div>
+      </div>
+
+    </section>
+
+    <!-- ======================= PROFILES ======================= -->
+    <section id="tab-profiles" class="tab-panel">
+      <h2 class="section-title">Named partner profiles</h2>
+      <p class="section-sub">Each K-Means cluster is translated into a business-actionable profile: who they are, what the health score says, and what action the segment justifies.</p>
+      <div class="profiles-grid" id="profiles-grid"></div>
+    </section>
+
+    <!-- ======================= LOOKUP ======================= -->
+    <section id="tab-lookup" class="tab-panel">
+      <h2 class="section-title">Individual seller lookup</h2>
+      <p class="section-sub">Search by seller ID or state, or filter by segment, to inspect a single partner against their cluster and the overall population.</p>
+
+      <div class="lookup-controls">
+        <input type="text" id="lookup-search" placeholder="Search seller ID or state (e.g. OL-000512 or SP)…" oninput="renderSellerTable()">
+        <select id="lookup-segment" onchange="renderSellerTable()">
+          <option value="">All segments</option>
+        </select>
+      </div>
+
+      <div class="lookup-layout">
+        <div>
+          <div class="results-count" id="results-count"></div>
+          <div class="table-wrap">
+            <table class="sellers">
+              <thead>
+                <tr><th>Seller</th><th>State</th><th>Segment</th><th>Orders</th><th>Revenue</th><th>Health</th></tr>
+              </thead>
+              <tbody id="sellers-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="detail-panel" id="detail-panel">
+          <div class="detail-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="20" y1="20" x2="15.3" y2="15.3"/></svg>
+            Select a seller from the table to inspect their profile.
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   PartnerLens — synthetic data generation
+   Deterministic (seeded) so the prototype is reproducible.
+   ============================================================ */
+
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const rand = mulberry32(42);
+
+function randNormal(mean, std){
+  let u = 0, v = 0;
+  while (u === 0) u = rand();
+  while (v === 0) v = rand();
+  return mean + std * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function randUniform(min, max){ return min + rand() * (max - min); }
+function clip(v, min, max){ return Math.max(min, max !== undefined ? Math.min(v, max) : v); }
+function weightedChoice(items){
+  const total = items.reduce((s, i) => s + i.w, 0);
+  let r = rand() * total;
+  for (const it of items){ if (r < it.w) return it.v; r -= it.w; }
+  return items[items.length - 1].v;
+}
+
+const STATES = [
+  { v: 'SP', w: 0.42 }, { v: 'RJ', w: 0.12 }, { v: 'MG', w: 0.11 }, { v: 'PR', w: 0.06 },
+  { v: 'RS', w: 0.05 }, { v: 'SC', w: 0.05 }, { v: 'BA', w: 0.04 }, { v: 'DF', w: 0.03 },
+  { v: 'GO', w: 0.02 }, { v: 'ES', w: 0.02 }, { v: 'PE', w: 0.02 }, { v: 'CE', w: 0.02 }, { v: 'Other', w: 0.04 }
+];
+
+const SEGMENTS = [
+  {
+    key: 'premium', name: 'Premium & Consistent', color: '#E8A33D', share: 0.08,
+    desc: 'High-revenue, high-frequency sellers with fast delivery and minimal complaints. The backbone of marketplace GMV — small in headcount, disproportionate in revenue share.',
+    actionTag: 'RETAIN', actionColor: '#E8A33D',
+    action: 'Priority support tier and early access to new marketplace placements. Negotiate loyalty-linked commission tiers before a competing marketplace poaches them — this segment is the one most worth over-investing in.',
+    impact: 'Placeholder — compute (segment revenue share) ÷ (segment seller share) from the real pipeline; expect it to be the single strongest ratio in the table.',
+    gen: () => ({
+      orders: Math.round(clip(randNormal(85, 30), 20, 260)),
+      ticket: clip(randNormal(180, 50), 40, 500),
+      delivery: clip(randNormal(8, 2), 3, 20),
+      negReview: clip(randUniform(0.01, 0.05), 0, 1),
+      cancel: clip(randUniform(0, 0.02), 0, 1),
+      recency: clip(randUniform(1, 45), 0, 800)
+    })
+  },
+  {
+    key: 'highvol', name: 'High Volume, Low Quality', color: '#C1694A', share: 0.10,
+    desc: 'Strong order volume undermined by slow delivery and a high negative-review rate. Revenue at risk if quality issues start suppressing buyer trust and conversion on their listings.',
+    actionTag: 'DEVELOP', actionColor: '#C1694A',
+    action: 'Structured 90-day quality plan: delivery SLA, a review-remediation checklist, and milestone tracking. Escalate to enforcement (see At Risk) only if metrics don\'t move after two review cycles.',
+    impact: 'Placeholder — quantify GMV exposed to churn if negative-review rate keeps buyers from repeat-purchasing on this segment\'s listings.',
+    gen: () => ({
+      orders: Math.round(clip(randNormal(70, 25), 15, 220)),
+      ticket: clip(randNormal(90, 30), 20, 300),
+      delivery: clip(randNormal(18, 5), 8, 40),
+      negReview: clip(randUniform(0.15, 0.35), 0, 1),
+      cancel: clip(randUniform(0.05, 0.15), 0, 1),
+      recency: clip(randUniform(1, 60), 0, 800)
+    })
+  },
+  {
+    key: 'declining', name: 'Declining', color: '#8B85C7', share: 0.15,
+    desc: 'Previously solid performers who have gone quiet. Decent historical revenue and order quality, but a long gap since their last sale signals disengagement or migration to another channel.',
+    actionTag: 'REACTIVATE', actionColor: '#8B85C7',
+    action: 'Targeted win-back outreach from a named account contact, paired with a temporary incentive (fee waiver or featured placement) to resume listing activity.',
+    impact: 'Placeholder — compute the revenue this segment generated in its active window, to size the win-back opportunity.',
+    gen: () => ({
+      orders: Math.round(clip(randNormal(40, 15), 5, 140)),
+      ticket: clip(randNormal(140, 40), 30, 400),
+      delivery: clip(randNormal(11, 3), 4, 25),
+      negReview: clip(randUniform(0.05, 0.15), 0, 1),
+      cancel: clip(randUniform(0.02, 0.08), 0, 1),
+      recency: clip(randUniform(180, 400), 0, 800)
+    })
+  },
+  {
+    key: 'emerging', name: 'Emerging', color: '#4FB3A9', share: 0.17,
+    desc: 'New or low-tenure sellers with healthy early signals — low complaints, recent activity — but limited volume so far. Tomorrow\'s Premium segment, if nurtured.',
+    actionTag: 'GROW', actionColor: '#4FB3A9',
+    action: 'Onboarding acceleration and seller-education content aimed at order velocity, plus limited marketing placement support to help them find early traction.',
+    impact: 'Placeholder — track this cohort\'s health-score trajectory over the following quarters to validate that "emerging" actually predicts graduation to "premium."',
+    gen: () => ({
+      orders: Math.round(clip(randNormal(12, 5), 2, 45)),
+      ticket: clip(randNormal(110, 35), 20, 320),
+      delivery: clip(randNormal(9, 3), 3, 22),
+      negReview: clip(randUniform(0.0, 0.08), 0, 1),
+      cancel: clip(randUniform(0, 0.05), 0, 1),
+      recency: clip(randUniform(1, 30), 0, 800)
+    })
+  },
+  {
+    key: 'atrisk', name: 'At Risk / Low Engagement', color: '#D6685F', share: 0.50,
+    desc: 'Minimal order volume, sporadic activity, and mixed quality signals. The largest segment by headcount and the lowest average health score in the base — the expected long tail of any open marketplace.',
+    actionTag: 'DEPRIORITIZE', actionColor: '#D6685F',
+    action: 'Low-cost automated reactivation nudge first. If there\'s no response within one review window, deprioritize placement or move toward delisting to protect marketplace quality and cut support overhead.',
+    impact: 'Placeholder — confirm this segment\'s revenue share is small enough that delisting the unresponsive tail is a net positive for support cost, not a GMV risk.',
+    gen: () => ({
+      orders: Math.round(clip(randNormal(4, 3), 1, 18)),
+      ticket: clip(randNormal(60, 25), 10, 220),
+      delivery: clip(randNormal(15, 6), 5, 45),
+      negReview: clip(randUniform(0.05, 0.30), 0, 1),
+      cancel: clip(randUniform(0.03, 0.20), 0, 1),
+      recency: clip(randUniform(60, 400), 0, 800)
+    })
+  }
+];
+
+const TOTAL_SELLERS = 1800;
+
+let sellers = [];
+(function generateSellers(){
+  let idx = 0;
+  SEGMENTS.forEach(seg => {
+    const n = Math.round(TOTAL_SELLERS * seg.share);
+    for (let i = 0; i < n; i++){
+      idx++;
+      const f = seg.gen();
+      const revenue = Math.max(50, f.orders * f.ticket * randUniform(0.85, 1.15));
+      sellers.push({
+        id: 'OL-' + String(idx).padStart(6, '0'),
+        state: weightedChoice(STATES),
+        segment: seg.key,
+        orders: f.orders,
+        ticket: f.ticket,
+        revenue: revenue,
+        delivery: f.delivery,
+        negReview: f.negReview,
+        cancel: f.cancel,
+        recency: f.recency
+      });
+    }
+  });
+})();
+
+// population stats for normalization
+function mean(arr){ return arr.reduce((a,b)=>a+b,0) / arr.length; }
+function std(arr, m){ return Math.sqrt(arr.reduce((s,v)=>s+(v-m)*(v-m),0) / arr.length); }
+function minMax(arr){ return [Math.min(...arr), Math.max(...arr)]; }
+
+const logRevenue = sellers.map(s => Math.log1p(s.revenue));
+const logOrders = sellers.map(s => Math.log1p(s.orders));
+const recencyArr = sellers.map(s => s.recency);
+const deliveryArr = sellers.map(s => s.delivery);
+
+const [revMin, revMax] = minMax(logRevenue);
+const [ordMin, ordMax] = minMax(logOrders);
+const [recMin, recMax] = minMax(recencyArr);
+const [delMin, delMax] = minMax(deliveryArr);
+
+function norm(v, lo, hi){ return hi === lo ? 0.5 : (v - lo) / (hi - lo); }
+
+const revMean = mean(logRevenue), revStd = std(logRevenue, revMean);
+const ordMean = mean(logOrders), ordStd = std(logOrders, ordMean);
+const recMean = mean(recencyArr), recStd = std(recencyArr, recMean);
+const delMean = mean(deliveryArr), delStd = std(deliveryArr, delMean);
+const negArr = sellers.map(s => s.negReview);
+const canArr = sellers.map(s => s.cancel);
+const negMean = mean(negArr), negStd = std(negArr, negMean);
+const canMean = mean(canArr), canStd = std(canArr, canMean);
+
+sellers.forEach(s => {
+  const revScore = norm(Math.log1p(s.revenue), revMin, revMax);
+  const freqScore = norm(Math.log1p(s.orders), ordMin, ordMax);
+  const recencyScore = 1 - norm(s.recency, recMin, recMax);
+  const deliveryScore = 1 - norm(s.delivery, delMin, delMax);
+  const reviewScore = 1 - s.negReview;
+  const cancelScore = 1 - s.cancel;
+
+  s.health = 100 * (
+    0.25 * revScore +
+    0.15 * freqScore +
+    0.20 * recencyScore +
+    0.20 * reviewScore +
+    0.10 * cancelScore +
+    0.10 * deliveryScore
+  );
+
+  // synthetic 2D projection standing in for a real PCA(2) embedding
+  const zRev = (Math.log1p(s.revenue) - revMean) / (revStd || 1);
+  const zOrd = (Math.log1p(s.orders) - ordMean) / (ordStd || 1);
+  const zRec = (s.recency - recMean) / (recStd || 1);
+  const zNeg = (s.negReview - negMean) / (negStd || 1);
+  const zCan = (s.cancel - canMean) / (canStd || 1);
+  const zDel = (s.delivery - delMean) / (delStd || 1);
+
+  s.pc1 = zRev + zOrd - zRec + randNormal(0, 0.35);
+  s.pc2 = zNeg + zCan + zDel + randNormal(0, 0.35);
+
+  s._z = { revenue: zRev, orders: zOrd, recency: zRec, negReview: zNeg, cancel: zCan, delivery: zDel };
+});
+
+function segOf(key){ return SEGMENTS.find(s => s.key === key); }
+function tierColor(score){
+  if (score >= 75) return '#6FBF7D';
+  if (score >= 50) return '#E8A33D';
+  if (score >= 30) return '#C1694A';
+  return '#D6685F';
+}
+function tierLabel(score){
+  if (score >= 75) return 'Strong';
+  if (score >= 50) return 'Stable';
+  if (score >= 30) return 'Fragile';
+  return 'Critical';
+}
+
+/* ============================================================
+   Aperture gauge (signature element)
+   ============================================================ */
+function gaugeSVG(score, size, opts){
+  opts = opts || {};
+  const showLabel = opts.label !== false;
+  const r = size / 2 - 11;
+  const cx = size / 2, cy = size / 2;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference * (1 - clip(score, 0, 100) / 100);
+  const color = tierColor(score);
+  let ticks = '';
+  const nTicks = 16;
+  for (let i = 0; i < nTicks; i++){
+    const angle = (i / nTicks) * 2 * Math.PI - Math.PI / 2;
+    const x1 = cx + (r - 7) * Math.cos(angle), y1 = cy + (r - 7) * Math.sin(angle);
+    const x2 = cx + (r + 2) * Math.cos(angle), y2 = cy + (r + 2) * Math.sin(angle);
+    ticks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#3A4152" stroke-width="1.3"/>`;
+  }
+  const numFont = Math.round(size * 0.24);
+  const lblFont = Math.max(8, Math.round(size * 0.085));
+  return `
+  <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Health score ${Math.round(score)} of 100">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2B303C" stroke-width="7"/>
+    <g opacity="0.6">${ticks}</g>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"
+      stroke-dasharray="${circumference.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
+      transform="rotate(-90 ${cx} ${cy})" style="transition:stroke-dashoffset .6s ease"/>
+    <text x="${cx}" y="${cy - 1}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="${numFont}" fill="#ECE9E2" font-weight="600">${Math.round(score)}</text>
+    ${showLabel ? `<text x="${cx}" y="${cy + size*0.19}" text-anchor="middle" font-family="Inter, sans-serif" font-size="${lblFont}" fill="#9CA1AD" letter-spacing="0.5">HEALTH</text>` : ''}
+  </svg>`;
+}
+
+/* ============================================================
+   Plotly theme helpers
+   ============================================================ */
+const PLOTLY_FONT = { family: 'Inter, sans-serif', color: '#9CA1AD', size: 11.5 };
+function baseLayout(extra){
+  return Object.assign({
+    paper_bgcolor: 'transparent',
+    plot_bgcolor: 'transparent',
+    font: PLOTLY_FONT,
+    margin: { l: 44, r: 20, t: 10, b: 40 },
+    showlegend: false,
+    xaxis: { gridcolor: '#242A35', zerolinecolor: '#2B303C', linecolor: '#2B303C' },
+    yaxis: { gridcolor: '#242A35', zerolinecolor: '#2B303C', linecolor: '#2B303C' }
+  }, extra || {});
+}
+const PLOTLY_CONFIG = { displayModeBar: false, responsive: true };
+
+/* ============================================================
+   Formatters
+   ============================================================ */
+function fmtCompactBRL(v){
+  if (v >= 1e6) return 'R$ ' + (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return 'R$ ' + (v / 1e3).toFixed(1) + 'K';
+  return 'R$ ' + v.toFixed(0);
+}
+function fmtBRL(v){ return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+function fmtInt(v){ return v.toLocaleString('en-US'); }
+
+/* ============================================================
+   Tab init / lazy render
+   ============================================================ */
+const initialized = {};
+
+function showTab(id){
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector(`.nav-btn[data-tab="${id}"]`).classList.add('active');
+  initTab(id);
+}
+function initTab(id){
+  if (initialized[id]) return;
+  initialized[id] = true;
+  if (id === 'tab-overview') renderOverview();
+  if (id === 'tab-segmentation') renderSegmentation();
+  if (id === 'tab-profiles') renderProfiles();
+  if (id === 'tab-lookup') renderLookup();
+}
+
+/* ---------------- Overview ---------------- */
+function renderOverview(){
+  const activeCount = sellers.filter(s => s.recency <= 90).length;
+  document.getElementById('kpi-active').textContent = fmtInt(activeCount);
+  document.getElementById('kpi-active-sub').textContent = `${(100*activeCount/sellers.length).toFixed(1)}% of ${fmtInt(sellers.length)} sellers`;
+
+  const totalRevenue = sellers.reduce((s,x) => s + x.revenue, 0);
+  document.getElementById('kpi-revenue').textContent = fmtCompactBRL(totalRevenue);
+  document.getElementById('kpi-revenue-sub').textContent = 'sum of order item value, seller-order pairs';
+
+  const avgHealth = mean(sellers.map(s => s.health));
+  document.getElementById('kpi-gauge-holder').innerHTML = gaugeSVG(avgHealth, 84);
+
+  const avgNeg = mean(sellers.map(s => s.negReview));
+  document.getElementById('kpi-negreview').textContent = (avgNeg*100).toFixed(1) + '%';
+  document.getElementById('kpi-negreview-sub').textContent = 'order review score ≤ 2';
+
+  // revenue by segment (bar)
+  const segAgg = SEGMENTS.map(seg => {
+    const rows = sellers.filter(s => s.segment === seg.key);
+    return { seg, avgRev: mean(rows.map(r => r.revenue)), n: rows.length };
+  }).sort((a,b) => b.avgRev - a.avgRev);
+
+  Plotly.newPlot('chart-revenue-by-segment', [{
+    type: 'bar', orientation: 'h',
+    x: segAgg.map(a => a.avgRev),
+    y: segAgg.map(a => a.seg.name),
+    marker: { color: segAgg.map(a => a.seg.color) },
+    hovertemplate: '%{y}<br>Avg revenue: R$ %{x:,.0f}<extra></extra>'
+  }], baseLayout({
+    margin: { l: 150, r: 20, t: 10, b: 40 },
+    xaxis: { gridcolor: '#242A35', tickprefix: 'R$ ', tickformat: ',.0f' },
+    yaxis: { autorange: 'reversed' }
+  }), PLOTLY_CONFIG);
+
+  // donut
+  Plotly.newPlot('chart-segment-donut', [{
+    type: 'pie', hole: 0.62,
+    labels: SEGMENTS.map(s => s.name),
+    values: SEGMENTS.map(s => sellers.filter(x => x.segment === s.key).length),
+    marker: { colors: SEGMENTS.map(s => s.color), line: { color: '#14171C', width: 2 } },
+    textfont: { color: '#ECE9E2', family: 'Inter, sans-serif', size: 11 },
+    hovertemplate: '%{label}<br>%{value} sellers (%{percent})<extra></extra>'
+  }], baseLayout({ margin: { l: 10, r: 10, t: 10, b: 10 }, showlegend: true, legend: { orientation: 'v', font: { size: 10.5, color: '#9CA1AD' }, x: 1, y: 0.5 } }), PLOTLY_CONFIG);
+}
+
+/* ---------------- Segmentation ---------------- */
+function renderSegmentation(){
+  const kRange = [2,3,4,5,6,7,8,9,10];
+  const inertia = [18400,13200,9800,7600,6300,5500,4900,4450,4100];
+  const silhouette = [0.31,0.36,0.39,0.43,0.40,0.37,0.35,0.33,0.31];
+
+  Plotly.newPlot('chart-elbow', [
+    { x: kRange, y: inertia, type: 'scatter', mode: 'lines+markers', name: 'Inertia',
+      line: { color: '#4FB3A9', width: 2 }, marker: { size: 6, color: '#4FB3A9' }, yaxis: 'y' },
+    { x: kRange, y: silhouette, type: 'scatter', mode: 'lines+markers', name: 'Silhouette',
+      line: { color: '#E8A33D', width: 2 }, marker: { size: 6, color: '#E8A33D' }, yaxis: 'y2' }
+  ], baseLayout({
+    margin: { l: 46, r: 46, t: 10, b: 40 },
+    showlegend: true, legend: { orientation: 'h', y: 1.15, font: { size: 10.5, color: '#9CA1AD' } },
+    xaxis: { title: { text: 'k', font: { size: 11 } }, gridcolor: '#242A35', dtick: 1 },
+    yaxis: { title: { text: 'Inertia', font: { size: 10.5, color: '#4FB3A9' } }, gridcolor: '#242A35' },
+    yaxis2: { title: { text: 'Silhouette', font: { size: 10.5, color: '#E8A33D' } }, overlaying: 'y', side: 'right', gridcolor: 'transparent', range: [0,0.6] },
+    shapes: [{ type: 'line', x0: 5, x1: 5, y0: 0, y1: 1, xref: 'x', yref: 'paper', line: { color: '#3A4152', width: 1, dash: 'dot' } }],
+    annotations: [{ x: 5, y: 1.02, xref: 'x', yref: 'paper', text: 'chosen k=5', showarrow: false, font: { size: 10, color: '#6B707C' } }]
+  }), PLOTLY_CONFIG);
+
+  const traces = SEGMENTS.map(seg => {
+    const rows = sellers.filter(s => s.segment === seg.key);
+    return {
+      type: 'scattergl', mode: 'markers', name: seg.name,
+      x: rows.map(r => r.pc1), y: rows.map(r => r.pc2),
+      marker: { size: 4.5, color: seg.color, opacity: 0.55 },
+      hovertemplate: seg.name + '<br>PC1: %{x:.2f}<br>PC2: %{y:.2f}<extra></extra>'
+    };
+  });
+  Plotly.newPlot('chart-pca', traces, baseLayout({
+    showlegend: true, legend: { orientation: 'h', y: 1.15, font: { size: 9.5, color: '#9CA1AD' } },
+    xaxis: { title: { text: 'PC1 — scale & activity', font: { size: 10.5 } }, gridcolor: '#242A35' },
+    yaxis: { title: { text: 'PC2 — quality risk', font: { size: 10.5 } }, gridcolor: '#242A35' }
+  }), PLOTLY_CONFIG);
+
+  const features = ['revenue','orders','recency','delivery','negReview','cancel'];
+  const featureLabels = ['Revenue','Frequency','Recency','Delivery days','Neg. review rate','Cancel rate'];
+  function pearson(a,b){
+    const ma = mean(a), mb = mean(b);
+    let num=0, da=0, db=0;
+    for (let i=0;i<a.length;i++){ num += (a[i]-ma)*(b[i]-mb); da += (a[i]-ma)**2; db += (b[i]-mb)**2; }
+    return num / Math.sqrt(da*db);
+  }
+  const featureArrays = features.map(f => sellers.map(s => f==='revenue' ? Math.log1p(s.revenue) : f==='orders' ? Math.log1p(s.orders) : s[f]));
+  const corrMatrix = featureArrays.map(a => featureArrays.map(b => +pearson(a,b).toFixed(2)));
+
+  Plotly.newPlot('chart-corr', [{
+    type: 'heatmap', z: corrMatrix, x: featureLabels, y: featureLabels,
+    zmin: -1, zmax: 1,
+    colorscale: [[0,'#4FB3A9'],[0.5,'#1F242E'],[1,'#C1694A']],
+    colorbar: { tickfont: { color: '#9CA1AD', size: 10 }, outlinewidth: 0 },
+    texttemplate: '%{z}', textfont: { size: 10, color: '#ECE9E2' },
+    hovertemplate: '%{x} × %{y}: %{z}<extra></extra>'
+  }], baseLayout({ margin: { l: 100, r: 20, t: 10, b: 80 } }), PLOTLY_CONFIG);
+}
+
+/* ---------------- Profiles ---------------- */
+function renderProfiles(){
+  const grid = document.getElementById('profiles-grid');
+  grid.innerHTML = SEGMENTS.map(seg => {
+    const rows = sellers.filter(s => s.segment === seg.key);
+    const avgHealth = mean(rows.map(r => r.health));
+    const avgRevenue = mean(rows.map(r => r.revenue));
+    const avgOrders = mean(rows.map(r => r.orders));
+    const avgNeg = mean(rows.map(r => r.negReview));
+    const revShare = 100 * rows.reduce((s,r)=>s+r.revenue,0) / sellers.reduce((s,r)=>s+r.revenue,0);
+    return `
+    <div class="profile-card">
+      <div class="profile-strip" style="background:${seg.color}"></div>
+      <div class="profile-body">
+        <div class="profile-head">
+          <div>
+            <h3>${seg.name}</h3>
+            <div class="profile-count">${fmtInt(rows.length)} sellers · ${(100*rows.length/sellers.length).toFixed(1)}% of base</div>
+          </div>
+          ${gaugeSVG(avgHealth, 60, { label:false })}
+        </div>
+        <p class="profile-desc">${seg.desc}</p>
+        <div class="profile-stats">
+          <div class="pstat"><div class="plabel">Avg. revenue</div><div class="pval">${fmtCompactBRL(avgRevenue)}</div></div>
+          <div class="pstat"><div class="plabel">Avg. orders</div><div class="pval">${avgOrders.toFixed(0)}</div></div>
+          <div class="pstat"><div class="plabel">Revenue share</div><div class="pval">${revShare.toFixed(1)}%</div></div>
+          <div class="pstat"><div class="plabel">Neg. review rate</div><div class="pval">${(avgNeg*100).toFixed(1)}%</div></div>
+        </div>
+        <div class="profile-action">
+          <span class="action-tag" style="color:${seg.actionColor}">${seg.actionTag}</span>
+          <p>${seg.action}</p>
+          <div class="profile-impact">${seg.impact}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- Lookup ---------------- */
+let selectedSellerId = null;
+
+function initLookupSegmentOptions(){
+  const sel = document.getElementById('lookup-segment');
+  SEGMENTS.forEach(seg => {
+    const opt = document.createElement('option');
+    opt.value = seg.key; opt.textContent = seg.name;
+    sel.appendChild(opt);
+  });
+}
+
+function renderLookup(){
+  initLookupSegmentOptions();
+  renderSellerTable();
+}
+
+function renderSellerTable(){
+  const q = (document.getElementById('lookup-search').value || '').trim().toLowerCase();
+  const segFilter = document.getElementById('lookup-segment').value;
+
+  let filtered = sellers.filter(s => {
+    const matchesQuery = !q || s.id.toLowerCase().includes(q) || s.state.toLowerCase().includes(q);
+    const matchesSeg = !segFilter || s.segment === segFilter;
+    return matchesQuery && matchesSeg;
+  }).sort((a,b) => b.health - a.health);
+
+  const shown = filtered.slice(0, 150);
+  document.getElementById('results-count').textContent =
+    `Showing ${fmtInt(shown.length)} of ${fmtInt(filtered.length)} matching sellers${filtered.length > 150 ? ' — refine your search to narrow further' : ''}`;
+
+  const tbody = document.getElementById('sellers-tbody');
+  tbody.innerHTML = shown.map(s => {
+    const seg = segOf(s.segment);
+    return `<tr data-id="${s.id}" class="${s.id === selectedSellerId ? 'selected' : ''}" onclick="selectSeller('${s.id}')">
+      <td class="id">${s.id}</td>
+      <td>${s.state}</td>
+      <td><span class="seg-dot" style="background:${seg.color}"></span>${seg.name}</td>
+      <td>${s.orders}</td>
+      <td>${fmtCompactBRL(s.revenue)}</td>
+      <td style="color:${tierColor(s.health)}; font-family:var(--font-mono); font-weight:600;">${Math.round(s.health)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectSeller(id){
+  selectedSellerId = id;
+  document.querySelectorAll('table.sellers tbody tr').forEach(tr => tr.classList.toggle('selected', tr.dataset.id === id));
+  const s = sellers.find(x => x.id === id);
+  const seg = segOf(s.segment);
+  const segRows = sellers.filter(x => x.segment === s.segment);
+  const segAvg = {
+    revenue: mean(segRows.map(r=>r.revenue)), orders: mean(segRows.map(r=>r.orders)),
+    delivery: mean(segRows.map(r=>r.delivery)), negReview: mean(segRows.map(r=>r.negReview)),
+    cancel: mean(segRows.map(r=>r.cancel)), recency: mean(segRows.map(r=>r.recency))
+  };
+
+  const panel = document.getElementById('detail-panel');
+  panel.innerHTML = `
+    <div class="detail-header">
+      ${gaugeSVG(s.health, 78)}
+      <div>
+        <div class="detail-id">${s.id}</div>
+        <div class="detail-sub">${s.state} · <span style="color:${seg.color}">${seg.name}</span></div>
+        <div class="gauge-tier-label" style="color:${tierColor(s.health)}">${tierLabel(s.health)}</div>
+      </div>
+    </div>
+    <div class="detail-stats">
+      <div class="pstat"><div class="plabel">Orders</div><div class="pval">${s.orders}</div></div>
+      <div class="pstat"><div class="plabel">Revenue</div><div class="pval">${fmtCompactBRL(s.revenue)}</div></div>
+      <div class="pstat"><div class="plabel">Avg. delivery</div><div class="pval">${s.delivery.toFixed(1)}d</div></div>
+      <div class="pstat"><div class="plabel">Days since last order</div><div class="pval">${Math.round(s.recency)}d</div></div>
+      <div class="pstat"><div class="plabel">Neg. review rate</div><div class="pval">${(s.negReview*100).toFixed(1)}%</div></div>
+      <div class="pstat"><div class="plabel">Cancel rate</div><div class="pval">${(s.cancel*100).toFixed(1)}%</div></div>
+    </div>
+    <div id="radar-chart" class="plot" style="height:230px;"></div>
+    <div class="detail-action">
+      <span class="action-tag" style="color:${seg.actionColor}">${seg.actionTag}</span>
+      <p>${seg.action}</p>
+    </div>
+  `;
+
+  const cats = ['Revenue','Frequency','Recency','Delivery speed','Review quality','Cancel control'];
+  function toRadarScale(vals){ return vals.concat([vals[0]]); }
+  const sellerVals = [
+    norm(Math.log1p(s.revenue), revMin, revMax),
+    norm(Math.log1p(s.orders), ordMin, ordMax),
+    1 - norm(s.recency, recMin, recMax),
+    1 - norm(s.delivery, delMin, delMax),
+    1 - s.negReview,
+    1 - s.cancel
+  ];
+  const segVals = [
+    norm(Math.log1p(segAvg.revenue), revMin, revMax),
+    norm(Math.log1p(segAvg.orders), ordMin, ordMax),
+    1 - norm(segAvg.recency, recMin, recMax),
+    1 - norm(segAvg.delivery, delMin, delMax),
+    1 - segAvg.negReview,
+    1 - segAvg.cancel
+  ];
+
+  Plotly.newPlot('radar-chart', [
+    { type: 'scatterpolar', r: toRadarScale(segVals), theta: cats.concat([cats[0]]), name: seg.name + ' avg',
+      fill: 'toself', fillcolor: 'rgba(155,161,173,0.08)', line: { color: '#6B707C', width: 1.5, dash: 'dot' } },
+    { type: 'scatterpolar', r: toRadarScale(sellerVals), theta: cats.concat([cats[0]]), name: s.id,
+      fill: 'toself', fillcolor: seg.color + '33', line: { color: seg.color, width: 2 } }
+  ], {
+    paper_bgcolor: 'transparent', font: PLOTLY_FONT,
+    polar: {
+      bgcolor: 'transparent',
+      radialaxis: { visible: true, range: [0,1], showticklabels: false, gridcolor: '#2B303C' },
+      angularaxis: { gridcolor: '#2B303C', tickfont: { size: 9.5, color: '#9CA1AD' } }
+    },
+    showlegend: true, legend: { orientation: 'h', y: -0.1, font: { size: 9.5, color: '#9CA1AD' } },
+    margin: { l: 30, r: 30, t: 20, b: 20 }
+  }, PLOTLY_CONFIG);
+}
+
+/* ============================================================
+   Boot
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  initTab('tab-overview');
+});
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.tab-panel.active .plot').forEach(el => {
+    if (el.id) Plotly.Plots.resize(el);
+  });
+});
+</script>
+
+</body>
+</html>

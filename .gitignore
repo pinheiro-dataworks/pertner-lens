@@ -1,0 +1,21 @@
+# raw data (download separately, see README)
+data/raw/*.csv
+
+# processed data is versioned intentionally -- do NOT ignore data/processed/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+*.egg-info/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

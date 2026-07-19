@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(python -m py_compile app/streamlit_app.py)",
+      "Read(//c/Users/rfppr/AppData/Local/Temp/claude/**)",
+      "Bash(netstat -ano)",
+      "Bash(python generate.py)"
+    ]
+  }
+}
